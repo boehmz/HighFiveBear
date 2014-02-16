@@ -11,7 +11,7 @@ public class OppositeBear : Bear {
 	HFState currentState;
 	ExciteBear exciteBear;
 	float currentDistFromExciteBear;
-	float maximumHighFiveDistance = .55f;
+	float maximumHighFiveDistance = .5f;
 	public bool isLastOfWave = false;
 
 	bool hitTrigger = false;
@@ -26,9 +26,9 @@ public class OppositeBear : Bear {
 	}
 	
 	// Update is called once per frame
-	protected override void Update () 
+	protected override void FixedUpdate () 
 	{
-		base.Update();
+		base.FixedUpdate();
 		if ( currentState == HFState.AWAITING_HIGH_FIVE && exciteBear.GetCurrentState() == ExciteBear.ExciteState.ELIGIBLE )
 		{
 			float distFromExciteBear = Bear.SpriteDistanceApart( transform.position, exciteBear.transform.position );
@@ -69,8 +69,8 @@ public class OppositeBear : Bear {
 		//Time.timeScale = 0;
 		rotationalVelocity = 720f;
 		exciteBear.rotationalVelocity = -720f;
-		SetSlowDownPercentDirectly( new Vector2( .0f, .0f ) );
-		exciteBear.SetSlowDownPercentDirectly( new Vector2( .0f, .00f ) );
+		SetSlowDownPercentDirectly( Vector2.zero );
+		exciteBear.SetSlowDownPercentDirectly( Vector2.zero );
 		exciteBear.FoundAHighFiver();
 		currentState = HFState.SUCCESSFUL_HIGH_FIVE;
 		GetComponent<SpriteRenderer>().color = new Color( 0, .92f, 1f );
@@ -79,7 +79,9 @@ public class OppositeBear : Bear {
 		{
 			if ( allOppositeBears[i].currentState == HFState.AWAITING_HIGH_FIVE || allOppositeBears[i].currentState == HFState.PREPARING )
 			{
-				allOppositeBears[i].SetSlowDownPercentDirectly( new Vector2( .4f, .35f ) );
+				Vector2 newSlowDownPercent = GameManager.Instance.oppositeBearsBaseMovementPercent;
+				newSlowDownPercent.Scale( new Vector2( .4f, .35f ) );
+				allOppositeBears[i].SetSlowDownPercentDirectly( newSlowDownPercent );
 			}
 		}
 		GameManager.Instance.GotHighFive( this );
@@ -115,7 +117,7 @@ public class OppositeBear : Bear {
 		for ( int i = 0; i < allOppositeBears.Length; ++i )
 		{
 			if ( allOppositeBears[i].currentState == HFState.AWAITING_HIGH_FIVE || allOppositeBears[i].currentState == HFState.PREPARING )
-				allOppositeBears[i].SetSlowDownPercentDirectly( Vector2.one ); // targetSlowDownPercent = Vector2.one;
+				allOppositeBears[i].targetSlowDownPercent = GameManager.Instance.oppositeBearsBaseMovementPercent;
 		}
 	}
 

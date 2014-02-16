@@ -25,7 +25,7 @@ public class InputManager : MonoBehaviour {
 	ExciteBear exciteBear;
 	Vector3 mousePos = Vector3.zero;
 	Vector3 initialMousePos = Vector3.zero;
-	float flickMinDistance = 1f;
+	float flickMaxDistance = 1.5f;
 
 	void Start()
 	{
@@ -42,7 +42,7 @@ public class InputManager : MonoBehaviour {
 		else if ( Input.GetMouseButton( 0 ) )
 		{
 			mousePos = Camera.main.ScreenToWorldPoint( Input.mousePosition );
-			if ( ExciteBear.SpriteDistanceApart( mousePos, initialMousePos ) > flickMinDistance )
+			if ( ExciteBear.SpriteDistanceApart( mousePos, initialMousePos ) > flickMaxDistance )
 			{
 				exciteBear.Flick( mousePos - initialMousePos );
 			}
@@ -50,7 +50,7 @@ public class InputManager : MonoBehaviour {
 		else if ( Input.GetMouseButtonUp( 0 ) )
 		{
 			mousePos = Camera.main.ScreenToWorldPoint( Input.mousePosition );
-			if ( ExciteBear.SpriteDistanceApart( mousePos, initialMousePos ) > flickMinDistance*.25f )
+			if ( ExciteBear.SpriteDistanceApart( mousePos, initialMousePos ) > flickMaxDistance*.125f )
 			{
 				exciteBear.Flick( mousePos - initialMousePos );
 			}

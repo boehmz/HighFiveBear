@@ -24,14 +24,14 @@ public class Bear : MonoBehaviour {
 
 
 	// Update is called once per frame
-	virtual protected void Update () 
+	virtual protected void FixedUpdate () 
 	{
-		transform.position += velocity * Time.deltaTime * slowDownPercent.x;
-		velocity.y -= gravity * Time.deltaTime * slowDownPercent.y;
+		transform.position += velocity * Time.fixedDeltaTime * slowDownPercent.x;
+		velocity.y -= gravity * Time.fixedDeltaTime * slowDownPercent.y;
 		if ( rotationalVelocity > 0 )
 		{
-			rotationalVelocity -= rotationalFriction*Time.deltaTime;
-			transform.Rotate( Vector3.forward, rotationalVelocity*Time.deltaTime );
+			rotationalVelocity -= rotationalFriction*Time.fixedDeltaTime;
+			transform.Rotate( Vector3.forward, rotationalVelocity*Time.fixedDeltaTime );
 			if ( rotationalVelocity <= 0 )
 			{
 				OnDoneRotating();
@@ -39,8 +39,8 @@ public class Bear : MonoBehaviour {
 		}
 		else if ( rotationalVelocity < 0 )
 		{
-			rotationalVelocity += rotationalFriction*Time.deltaTime;
-			transform.Rotate( Vector3.forward, rotationalVelocity*Time.deltaTime );
+			rotationalVelocity += rotationalFriction*Time.fixedDeltaTime;
+			transform.Rotate( Vector3.forward, rotationalVelocity*Time.fixedDeltaTime );
 			if ( rotationalVelocity >= 0 )
 			{
 				OnDoneRotating();
@@ -48,30 +48,30 @@ public class Bear : MonoBehaviour {
 		}
 		else if ( transform.rotation != naturalRotation )
 		{
-			transform.rotation = Quaternion.RotateTowards( transform.rotation, naturalRotation, 180f * Time.deltaTime );
+			transform.rotation = Quaternion.RotateTowards( transform.rotation, naturalRotation, 180f * Time.fixedDeltaTime );
 		}
 
 		if ( targetSlowDownPercent.x > slowDownPercent.x )
 		{
-			slowDownPercent.x += Time.deltaTime;
+			slowDownPercent.x += Time.fixedDeltaTime;
 			if ( slowDownPercent.x > targetSlowDownPercent.x )
 				slowDownPercent.x = targetSlowDownPercent.x;
 		}
 		else if ( targetSlowDownPercent.x < slowDownPercent.x )
 		{
-			slowDownPercent.x -= Time.deltaTime;
+			slowDownPercent.x -= Time.fixedDeltaTime;
 			if ( slowDownPercent.x < targetSlowDownPercent.x )
 				slowDownPercent.x = targetSlowDownPercent.x;
 		}
 		if ( targetSlowDownPercent.y > slowDownPercent.y )
 		{
-			slowDownPercent.y += Time.deltaTime;
+			slowDownPercent.y += Time.fixedDeltaTime*4;
 			if ( slowDownPercent.y > targetSlowDownPercent.y )
 				slowDownPercent.y = targetSlowDownPercent.y;
 		}
 		else if ( targetSlowDownPercent.y < slowDownPercent.y )
 		{
-			slowDownPercent.y -= Time.deltaTime;
+			slowDownPercent.y -= Time.fixedDeltaTime*4;
 			if ( slowDownPercent.y < targetSlowDownPercent.y )
 				slowDownPercent.y = targetSlowDownPercent.y;
 		}

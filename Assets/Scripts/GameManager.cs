@@ -36,6 +36,7 @@ public class GameManager : MonoBehaviour {
 	int waveAmtLeft = 0;
 	int totalScore = 0;
 	int highScore = 0;
+	int waveDifferential = 1;
 
 	public GameObject tutorialText;
 	public TextMesh exciteText;
@@ -43,10 +44,13 @@ public class GameManager : MonoBehaviour {
 	public TextMesh scoreText;
 	public TextMesh highScoreText;
 
+	public Vector2 oppositeBearsBaseMovementPercent = Vector2.one;
+
 	void Awake()
 	{
 		worldBoundaries = new Vector4( -7.6f, -7, 10.8f, 4.6f );
 		firstWaveAmt = currentWaveAmt;
+		Application.targetFrameRate = 60;
 	}
 
 	void Start()
@@ -58,6 +62,8 @@ public class GameManager : MonoBehaviour {
 
 	public void SpawnNewOppositeBear( int numBearsInGroup )
 	{
+		if ( numBearsInGroup < 1 )
+			numBearsInGroup = 1;
 		waveAmtLeft = numBearsInGroup;
 		inMiddleOfWave = true;
 		amtAtStartOfWave = numBearsInGroup;
@@ -89,6 +95,9 @@ public class GameManager : MonoBehaviour {
 					go.GetComponent<OppositeBear>().SetTrackPosition( lane );
 				}
 
+				oppositeBearsBaseMovementPercent = Vector2.one; //  new Vector2( 1+.05f*(numBearsInGroup-1), 1+.05f*(numBearsInGroup-1) );
+				go.GetComponent<OppositeBear>().SetSlowDownPercentDirectly( oppositeBearsBaseMovementPercent );
+
 				if ( i == numBearsInGroup-1 )
 				{
 					go.GetComponent<OppositeBear>().isLastOfWave = true;
@@ -117,8 +126,11 @@ public class GameManager : MonoBehaviour {
 		exciteText.gameObject.SetActive( false );
 		exciteBear.Reset();
 		currentWaveAmt = firstWaveAmt;
-		SpawnNewOppositeBear( currentWaveAmt );
+		oppositeBearsBaseMovementPercent = Vector2.one;
+		waveDifferential = 1;
 
+
+		SpawnNewOppositeBear( currentWaveAmt );
 	}
 
 	public void GotHighFive( OppositeBear ob )
@@ -163,7 +175,18 @@ public class GameManager : MonoBehaviour {
 			exciteBear.OnCompleteWave( waveAmtLeft == 0 );
 			if ( waveAmtLeft == 0 )
 			{
-				currentWaveAmt++;
+				if ( amtAtStartOfWave == 1 )
+					waveDifferential = 1;
+
+				currentWaveAmt += waveDifferential;
+
+				if ( amtAtStartOfWave == 6 )
+				{
+					if ( waveDifferential > 0 )
+						waveDifferential = 0;
+					else
+						waveDifferential = -1;
+				}
 			}
 			else
 			{

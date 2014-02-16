@@ -37,13 +37,13 @@ public class ExciteBear : Bear {
 	}
 	
 	// Update is called once per frame
-	protected override void Update () 
+	protected override void FixedUpdate () 
 	{
 		if ( currentState == ExciteState.ELIGIBLE )
 		{
 			if ( !isBeingFlicked )
 			{
-				base.Update();
+				base.FixedUpdate();
 				if ( hasJumped && onGround && velocity.y < 0 )
 				{
 					Debug.Log("just landed" );
@@ -53,24 +53,24 @@ public class ExciteBear : Bear {
 			}
 			else
 			{
-				transform.position += flickedDirection * flickSpeed * Time.deltaTime;
+				transform.position += flickedDirection * flickSpeed * Time.fixedDeltaTime;
 			}
 			CheckBoundaries();
 		}
 		else if ( currentState == ExciteState.CRASHING )
 		{
-			transform.position += velocity * Time.deltaTime;
+			transform.position += velocity * Time.fixedDeltaTime;
 
-			transform.Rotate( Vector3.forward, rotationalVelocity*Time.deltaTime );
+			transform.Rotate( Vector3.forward, rotationalVelocity*Time.fixedDeltaTime );
 			CheckBoundaries();
 		}
 		else if ( currentState == ExciteState.ENJOYINGSUCCESS )
 		{
-			base.Update();
+			base.FixedUpdate();
 			if ( onGround )
 			{
 				velocity.y = 0;
-				if ( SpriteDistanceApart( transform.position, RESETposition ) < 4*Time.deltaTime )
+				if ( SpriteDistanceApart( transform.position, RESETposition ) < 4*Time.fixedDeltaTime )
 				{
 					Debug.Log("now start the next wave" );
 					GameManager.Instance.BeginNextWave();
@@ -116,11 +116,11 @@ public class ExciteBear : Bear {
 
 	public void Flick( Vector3 direction )
 	{
-		if ( !isBeingFlicked && rotationalVelocity == 0 && transform.position.y > groundHeight )
+		direction.z = 0;
+		direction.Normalize();
+		if ( !isBeingFlicked && rotationalVelocity == 0 && transform.position.y > groundHeight && direction.sqrMagnitude > 0.0001f )
 		{
 			flickedDirection = direction;
-			flickedDirection.z = 0;
-			flickedDirection.Normalize();
 			isBeingFlicked = true;
 			flickSpeed = 12; // 2 * (6f + velocity.magnitude);
 			velocity.y = 0;
