@@ -49,6 +49,7 @@ public class InputManager : MonoBehaviour {
 		}
 		else if ( Input.GetMouseButtonUp( 0 ) )
 		{
+			GameManager.Instance.MouseLifted();
 			mousePos = Camera.main.ScreenToWorldPoint( Input.mousePosition );
 			if ( ExciteBear.SpriteDistanceApart( mousePos, initialMousePos ) > flickMaxDistance*.125f )
 			{

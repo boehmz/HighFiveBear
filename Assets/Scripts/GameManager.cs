@@ -23,6 +23,11 @@ public class GameManager : MonoBehaviour {
 		}
 	}
 
+	public enum GameState { MENUS, PLAYING };
+	public GameState gameState = GameState.MENUS;
+
+	enum MenuState { REGULAR, CREDITS, INFO };
+	MenuState menuState;
 	public GameObject oppositeBearPrototype;
 	public ExciteBear exciteBear;
 	public float heightOfMisses = -4f;
@@ -39,10 +44,19 @@ public class GameManager : MonoBehaviour {
 	int waveDifferential = 1;
 
 	public GameObject tutorialText;
+	public GameObject creditsText;
+	public GameObject hintsText;
+
 	public TextMesh exciteText;
 
 	public TextMesh scoreText;
 	public TextMesh highScoreText;
+
+	public UIButtonGeneric startButton;
+	public UIButtonGeneric creditsButton;
+	public UIButtonGeneric infoButton;
+
+	public AudioSource rewardSound;
 
 	public Vector2 oppositeBearsBaseMovementPercent = Vector2.one;
 
@@ -51,13 +65,18 @@ public class GameManager : MonoBehaviour {
 		worldBoundaries = new Vector4( -7.6f, -7, 10.8f, 4.6f );
 		firstWaveAmt = currentWaveAmt;
 		Application.targetFrameRate = 60;
+		startButton.Pressed += StartButtonPressed; 
+		infoButton.Pressed += InfoButtonPressed;
+		creditsButton.Pressed += CreditsButtonPressed;
 	}
 
 	void Start()
 	{
-		SpawnNewOppositeBear( currentWaveAmt );
+
 		exciteBear = (ExciteBear)GameObject.FindObjectOfType( typeof( ExciteBear ) );
 		exciteText.gameObject.SetActive( false );
+		gameState = GameState.MENUS;
+		menuState = MenuState.REGULAR;
 	}
 
 	public void SpawnNewOppositeBear( int numBearsInGroup )
@@ -67,7 +86,6 @@ public class GameManager : MonoBehaviour {
 		waveAmtLeft = numBearsInGroup;
 		inMiddleOfWave = true;
 		amtAtStartOfWave = numBearsInGroup;
-		Debug.Log("now spawning a wave of " + amtAtStartOfWave + " bears." );
 
 		List<int> lanesLeft = new List<int>();
 		for ( int i = 0; i < 4; ++i )
@@ -109,7 +127,7 @@ public class GameManager : MonoBehaviour {
 
 	public void ResetGame()
 	{
-		Debug.Log(" failed a wave, resetting the game" );
+		StopRewardSound();
 		inMiddleOfWave = false;
 		OppositeBear[] allOppositeBears = (OppositeBear[]) GameObject.FindObjectsOfType( typeof( OppositeBear ) );
 		for ( int i = 0; i < allOppositeBears.Length; ++i )
@@ -129,8 +147,10 @@ public class GameManager : MonoBehaviour {
 		oppositeBearsBaseMovementPercent = Vector2.one;
 		waveDifferential = 1;
 
+		menuState = MenuState.REGULAR;
+		SetButtonsActive( true );
+		gameState = GameState.MENUS;
 
-		SpawnNewOppositeBear( currentWaveAmt );
 	}
 
 	public void GotHighFive( OppositeBear ob )
@@ -138,7 +158,6 @@ public class GameManager : MonoBehaviour {
 		waveAmtLeft--;
 		totalScore++;
 		scoreText.text = totalScore.ToString();
-		tutorialText.SetActive( false );
 		string actualText = "";
 		switch ( amtAtStartOfWave - waveAmtLeft )
 		{
@@ -157,22 +176,45 @@ public class GameManager : MonoBehaviour {
 			actualText = "Penta\n";
 			break;
 		default:
-			actualText = "Mega Ultra\n";
+			actualText = "Hexa\n";
 			break;
 		}
 		actualText += "High Five!";
 
 		exciteText.text = actualText;
 		exciteText.gameObject.SetActive( true );
+		if ( rewardSound )
+		{
+			if ( !rewardSound.isPlaying )
+			{
+				double startTime = AudioSettings.dspTime;
+				rewardSound.pitch = 1;
+				rewardSound.loop = true;
+				rewardSound.Play();
+			//	rewardSound.SetScheduledEndTime( startTime + amtAtStartOfWave );
+			}
+			else
+			{
+				rewardSound.pitch += .125f;
+			}
+			rewardSound.pitch = 1 + .125f * (amtAtStartOfWave-waveAmtLeft-1);
+			rewardSound.SetScheduledEndTime( AudioSettings.dspTime + (amtAtStartOfWave) );
+		}
+	}
+
+	public void StopRewardSound()
+	{
+		if ( rewardSound && rewardSound.isPlaying )
+			rewardSound.Stop();
 	}
 
 	public void FinishedWave()
 	{
 		if ( inMiddleOfWave )
 		{
-			Debug.Log("finished the game with " + waveAmtLeft + " to go." );
 			inMiddleOfWave = false;
 			exciteBear.OnCompleteWave( waveAmtLeft == 0 );
+			StopRewardSound();
 			if ( waveAmtLeft == 0 )
 			{
 				if ( amtAtStartOfWave == 1 )
@@ -204,4 +246,74 @@ public class GameManager : MonoBehaviour {
 		}
 		SpawnNewOppositeBear( currentWaveAmt );
 	}
+
+	public void StartButtonPressed()
+	{
+		hintsText.SetActive( false );
+		tutorialText.SetActive( false );
+		creditsText.SetActive( false );
+		SetButtonsActive( false );
+		exciteBear.gameObject.SetActive( true );
+		exciteBear.Reset();
+		gameState = GameState.PLAYING;
+		SpawnNewOppositeBear( currentWaveAmt );
+	}
+
+	public void CreditsButtonPressed()
+	{
+		if ( menuState == MenuState.CREDITS )
+		{
+			hintsText.SetActive( false );
+			creditsText.SetActive( false );
+			tutorialText.SetActive( true );
+			menuState = MenuState.REGULAR;
+			exciteBear.gameObject.SetActive( true );
+		}
+		else
+		{
+			hintsText.SetActive( false );
+			tutorialText.SetActive( false );
+			creditsText.SetActive( true );
+			menuState = MenuState.CREDITS;
+			exciteBear.gameObject.SetActive( false );
+		}
+	}
+
+	public void InfoButtonPressed()
+	{
+		if ( menuState == MenuState.INFO )
+		{
+			creditsText.SetActive( false );
+			hintsText.SetActive( false );
+			tutorialText.SetActive( true );
+			exciteBear.gameObject.SetActive( true );
+			menuState = MenuState.REGULAR;
+		}
+		else
+		{
+			tutorialText.SetActive( false );
+			creditsText.SetActive( false );
+			hintsText.SetActive( true );
+			exciteBear.gameObject.SetActive( false );
+			menuState = MenuState.INFO;
+		}
+	}
+
+	void SetButtonsActive( bool nowActive )
+	{
+		startButton.gameObject.SetActive( nowActive );
+		creditsButton.gameObject.SetActive( nowActive );
+		infoButton.gameObject.SetActive( nowActive );
+	}
+
+	public void MouseLifted()
+	{
+		if ( gameState == GameState.MENUS )
+		{
+			startButton.MouseLiftedAwayFromButton();
+			creditsButton.MouseLiftedAwayFromButton();
+			infoButton.MouseLiftedAwayFromButton();
+		}
+	}
+	                          
 }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ExciteBear : Bear {
 
@@ -18,6 +19,10 @@ public class ExciteBear : Bear {
 	float RESETflickSpeed;
 	Vector3 RESETposition;
 
+	public AudioSource flickSoundEffect;
+
+	public List<AudioSource> ouchSoundEffects;
+
 	bool hasJumped = false;
 
 	Quaternion gyroRotation = Quaternion.identity;
@@ -27,18 +32,40 @@ public class ExciteBear : Bear {
 		RESETisBeingFlicked = isBeingFlicked;
 		RESETflickedDirection = flickedDirection;
 		RESETflickSpeed = flickSpeed;
+
+
+	//	groundHeight = 1;
+		Vector3 pos;
 		if ( transform.position.y < groundHeight )
 		{
-			Vector3 pos = transform.position;
+			pos = transform.position;
 			pos.y = groundHeight;
 			transform.position = pos;
 		}
+		/*
+		pos = transform.position;
+		pos.y = 1;
+		transform.position = pos;
+		gravity = 0;
+*/
 		RESETposition = transform.position;
+
+
 	}
-	
+
+	protected override void Start () 
+	{
+		base.Start();
+		Vector3 pos = transform.position;
+		pos.z = -6;
+		transform.position = pos;
+	}
+
 	// Update is called once per frame
 	protected override void FixedUpdate () 
 	{
+		if ( GameManager.Instance.gameState == GameManager.GameState.MENUS )
+			return;
 		if ( currentState == ExciteState.ELIGIBLE )
 		{
 			if ( !isBeingFlicked )
@@ -46,9 +73,7 @@ public class ExciteBear : Bear {
 				base.FixedUpdate();
 				if ( hasJumped && onGround && velocity.y < 0 )
 				{
-					Debug.Log("just landed" );
 					GameManager.Instance.FinishedWave();
-				//	GameManager.Instance.FinishedWave();
 				}
 			}
 			else
@@ -72,7 +97,6 @@ public class ExciteBear : Bear {
 				velocity.y = 0;
 				if ( SpriteDistanceApart( transform.position, RESETposition ) < 4*Time.fixedDeltaTime )
 				{
-					Debug.Log("now start the next wave" );
 					GameManager.Instance.BeginNextWave();
 					isBeingFlicked = false;
 					flickedDirection = RESETflickedDirection;
@@ -116,6 +140,9 @@ public class ExciteBear : Bear {
 
 	public void Flick( Vector3 direction )
 	{
+		if ( GameManager.Instance.gameState == GameManager.GameState.MENUS )
+			return;
+
 		direction.z = 0;
 		direction.Normalize();
 		if ( !isBeingFlicked && rotationalVelocity == 0 && transform.position.y > groundHeight && direction.sqrMagnitude > 0.0001f )
@@ -124,6 +151,10 @@ public class ExciteBear : Bear {
 			isBeingFlicked = true;
 			flickSpeed = 12; // 2 * (6f + velocity.magnitude);
 			velocity.y = 0;
+			if ( flickSoundEffect )
+			{
+				flickSoundEffect.Play();
+			}
 		}
 	}
 
@@ -136,10 +167,16 @@ public class ExciteBear : Bear {
 			SetSlowDownPercentDirectly( Vector2.one );
 			currentState = ExciteState.ENJOYINGSUCCESS;
 		}
+		else
+		{
+			GameManager.Instance.StopRewardSound();
+		}
 	}
 
 	void CheckBoundaries()
 	{
+		if ( GameManager.Instance.gameState == GameManager.GameState.MENUS )
+			return;
 		Vector3 pos = transform.position;
 		Vector4 bounds = GameManager.Instance.worldBoundaries;
 		if ( pos.x < bounds.x || pos.y < bounds.y || pos.x > bounds.z || pos.y > bounds.w )
@@ -169,7 +206,6 @@ public class ExciteBear : Bear {
 				velocity.x *= -1;
 			}
 
-
 			transform.position = pos;
 			rotationalVelocity = 1440f;
 			if ( currentState == ExciteState.ELIGIBLE )
@@ -182,12 +218,17 @@ public class ExciteBear : Bear {
 				velocity *= -1;
 			}
 
+			int ouchSoundIndex = Random.Range( 0, ouchSoundEffects.Count );
+			ouchSoundEffects[ouchSoundIndex].Play();
 			if ( currentState == ExciteState.CRASHING && pos.y <= bounds.y )
 			{
 				GameManager.Instance.ResetGame();
 			}
 			else
+			{
+				GameManager.Instance.StopRewardSound();
 				currentState = ExciteState.CRASHING;
+			}
 		}
 
 	}
@@ -199,8 +240,6 @@ public class ExciteBear : Bear {
 			velocity.y = gravity*1.1f;
 			hasJumped = true;
 		}
-		else
-			Debug.Log( this.name + " is not on the ground" );
 	}
 
 	public void Reset()

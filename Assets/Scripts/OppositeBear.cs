@@ -64,7 +64,6 @@ public class OppositeBear : Bear {
 
 	void HitHighFive( float dist )
 	{
-		Debug.Log("high five!!  Bears were " + dist + " apart." );
 		// successful high five
 		//Time.timeScale = 0;
 		rotationalVelocity = 720f;
@@ -103,8 +102,6 @@ public class OppositeBear : Bear {
 			float gravMultiplier = .9f;
 			velocity.y = Random.Range( gravity*(.6f-groundHeight*.1f), gravity*(.88f-groundHeight*.1f) );
 		}
-		else
-			Debug.Log( this.name + " is not on the ground" );
 
 		currentState = HFState.AWAITING_HIGH_FIVE;
 		currentDistFromExciteBear= -1f;
